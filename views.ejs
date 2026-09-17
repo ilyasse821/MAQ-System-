@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title><%= (typeof title !== "undefined" ? title : "Guardian") %> — Guardian</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<% if (page === "login") { %>
+<div class="login-screen"><div class="login-card">
+    <div class="brand"><span class="dot"></span> Guardian Dashboard</div>
+    <h1>أدخل كود PIN</h1>
+    <p>هذه اللوحة محمية بكود PIN. اطلبه من مالك البوت إن لم يكن بحوزتك.</p>
+    <% if (typeof error !== "undefined" && error) { %>
+      <div style="background:rgba(242,84,91,.1);border:1px solid rgba(242,84,91,.3);color:var(--critical);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:16px;"><%= error %></div>
+    <% } %>
+    <form method="POST" action="/auth/login">
+      <div class="field">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" name="pin" placeholder="••••••" maxlength="8" required autofocus
+          style="text-align:center;font-size:22px;letter-spacing:6px;padding:14px;" />
+      </div>
+      <button class="btn-discord" type="submit">دخول</button>
+    </form>
+</div></div>
+<% } else if (page === "change-pin") { %>
+<div class="login-screen"><div class="login-card">
+    <div class="brand"><span class="dot"></span> تغيير كود PIN</div>
+    <p style="margin-bottom:20px;">يجب إدخال الكود الحالي لتأكيد التغيير.</p>
+    <% if (typeof error !== "undefined" && error) { %>
+      <div style="background:rgba(242,84,91,.1);border:1px solid rgba(242,84,91,.3);color:var(--critical);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:16px;"><%= error %></div>
+    <% } %>
+    <% if (typeof success !== "undefined" && success) { %>
+      <div class="saved-toast"><%= success %></div>
+    <% } %>
+    <form method="POST" action="/auth/change-pin">
+      <div class="field"><label>الكود الحالي</label><input type="password" name="currentPin" maxlength="8" required /></div>
+      <div class="field"><label>الكود الجديد (4-8 أرقام)</label><input type="password" name="newPin" maxlength="8" pattern="[0-9]{4,8}" required /></div>
+      <div class="field"><label>تأكيد الكود الجديد</label><input type="password" name="confirmPin" maxlength="8" required /></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">حفظ الكود الجديد</button>
+    </form>
+    <div style="margin-top:14px;text-align:center;"><a href="/dashboard" style="color:var(--text-dim);font-size:12.5px;">← العودة للوحة التحكم</a></div>
+</div></div>
+<% } else if (page === "error") { %>
+<div class="login-screen"><div class="login-card" style="text-align:center;">
+    <h1 style="color:var(--critical)"><%= title %></h1>
+    <p><%= message %></p>
+    <a class="btn-discord" href="/dashboard">العودة للوحة التحكم</a>
+</div></div>
+<% } else if (page === "guilds") { %>
+<div class="content" style="max-width:900px;margin:0 auto;padding:50px 28px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="brand" style="display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;">
+        <span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);"></span>
+        اختر سيرفراً
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:6px;">السيرفرات التي تملك فيها صلاحية Manage Server، والبوت موجود فيها.</p>
+    </div>
+    <form method="POST" action="/auth/logout"><button class="logout-btn" type="submit">تسجيل الخروج</button></form>
+  </div>
+
+  <% if (!guilds.length) { %>
+    <div class="panel empty-state">لا توجد سيرفرات تملك فيها صلاحية إدارة، أو أن هذا الحساب لم يُخوَّل بعد.</div>
+  <% } else { %>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+      <% guilds.forEach(function(g) { %>
+        <a class="panel" style="display:flex;align-items:center;gap:12px;" href="/dashboard/<%= g.id %>">
+          <% if (g.icon) { %>
+            <img src="https://cdn.discordapp.com/icons/<%= g.id %>/<%= g.icon %>.png" style="width:40px;height:40px;border-radius:50%;" alt="" />
+          <% } else { %>
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--bg-panel-raised);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--signal);"><%= g.name.slice(0,1) %></div>
+          <% } %>
+          <div>
+            <div style="font-size:13.5px;font-weight:600;"><%= g.name %></div>
+            <% if (g.owner) { %><div style="font-size:11px;color:var(--text-dim);">مالك</div><% } %>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<% } else { %>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Guardian</div>
+    <a class="nav-link" href="/dashboard">↩ كل السيرفرات</a>
+    <div class="nav-group-label">عام</div>
+    <a class="nav-link <%= page === 'overview' ? 'active' : '' %>" href="/dashboard/<%= guildId %>">نظرة عامة</a>
+    <a class="nav-link <%= page === 'audit-log' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/audit-log">سجل اللوقات</a>
+    <div class="nav-group-label">الإدارة</div>
+    <a class="nav-link <%= page === 'cases' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/cases">الإجراءات الإدارية</a>
+    <a class="nav-link <%= page === 'tickets' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/tickets">التذاكر</a>
+    <div class="nav-group-label">الإعدادات</div>
+    <a class="nav-link <%= page === 'automod' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/automod">الحماية التلقائية</a>
+    <a class="nav-link <%= page === 'roles' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/roles">الرتب والصلاحيات</a>
+    <a class="nav-link <%= page === 'logs-config' ? 'active' : '' %>" href="/dashboard/<%= guildId %>/logs-config">تشانلات اللوق</a>
+    <div class="sidebar-footer">
+      <a class="nav-link" href="/auth/change-pin">🔑 تغيير كود PIN</a>
+      <form method="POST" action="/auth/logout"><button class="logout-btn" type="submit">تسجيل الخروج</button></form>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h2><%= typeof guildInfo !== "undefined" && guildInfo ? guildInfo.name : "السيرفر" %></h2>
+        <div class="guild-sub">ID: <%= guildId %></div>
+      </div>
+      <% if (typeof lockdownActive !== "undefined" && lockdownActive) { %>
+        <span class="status-pill critical"><span class="dot"></span> Lockdown مفعّل</span>
+      <% } %>
+    </div>
+    <div class="content">
+      <% if (page === "overview") { %>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="num"><%= stats.openTickets %></div><div class="label">تذاكر مفتوحة</div></div>
+    <div class="stat-box"><div class="num"><%= stats.totalCases %></div><div class="label">إجمالي الإجراءات الإدارية</div></div>
+    <div class="stat-box"><div class="num"><%= stats.todayCases %></div><div class="label">إجراءات آخر 24 ساعة</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>القفل الطارئ (Lockdown)</h3>
+    <p class="panel-desc">يقفل جميع الرومات النصية فوراً في حالات الطوارئ (اختراق، Raid كبير...). نفس تأثير أمر <code>/lockdown</code> داخل ديسكورد.</p>
+    <% if (lockdownActive) { %>
+      <form method="POST" action="/api/guilds/<%= guildId %>/lockdown/off">
+        <button class="btn btn-ghost" type="submit">إلغاء القفل الطارئ</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/api/guilds/<%= guildId %>/lockdown/on" onsubmit="return confirm('سيتم قفل كل الرومات النصية فوراً. متأكد؟');">
+        <button class="btn btn-danger" type="submit">تفعيل القفل الطارئ</button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h3>آخر الأحداث</h3>
+    <p class="panel-desc">أحدث 8 أحداث مسجّلة عبر كل الفئات.</p>
+    <% if (!recentEntries.length) { %>
+      <div class="empty-state">لا توجد أحداث مسجّلة بعد.</div>
+    <% } else { %>
+      <div class="feed">
+        <% recentEntries.forEach(function(e) { %>
+          <div class="feed-row">
+            <span class="feed-ts"><%= new Date(e.createdAt).toLocaleString("ar-EG") %></span>
+            <span class="feed-cat cat-<%= e.category %>"><%= e.category %></span>
+            <span class="feed-desc">
+              <%= e.action %>
+              <% if (e.executorTag) { %><span class="muted"> — بواسطة <%= e.executorTag %></span><% } %>
+              <% if (e.targetTag) { %><span class="muted"> ← <%= e.targetTag %></span><% } %>
+            </span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+    <div style="margin-top:14px;"><a class="btn btn-ghost" href="/dashboard/<%= guildId %>/audit-log">عرض كل اللوقات ←</a></div>
+  </div>
+      <% } else if (page === "logs-config") { %>
+
+  <% if (typeof saved !== "undefined") { %><div class="saved-toast">✅ تم حفظ الإعدادات بنجاح.</div><% } %>
+
+  <div class="panel">
+    <h3>تشانلات اللوق</h3>
+    <p class="panel-desc">حدد أي روم نصي يستقبل كل نوع من أنواع اللوقات. اتركه فارغاً لتعطيل هذا النوع.</p>
+
+    <form method="POST" action="/api/guilds/<%= guildId %>/logs-config">
+      <div class="grid-2">
+        <%
+          const logTypes = [
+            ["moderation", "الإجراءات الإدارية (Warn/Ban/Kick...)"],
+            ["messages", "الرسائل (حذف/تعديل)"],
+            ["voice", "الصوت (انضمام/سحب/تبديل)"],
+            ["joins", "الدخول والخروج"],
+            ["server", "السيرفر (رتب/رومات)"],
+            ["tickets", "التذاكر"],
+            ["automod", "الحماية التلقائية"],
+            ["commands", "استخدام الأوامر"],
+            ["errors", "الأخطاء التقنية"]
+          ];
+        %>
+        <% logTypes.forEach(function(lt) { %>
+          <div class="field">
+            <label><%= lt[1] %></label>
+            <select name="<%= lt[0] %>">
+              <option value="">— بدون تشانل —</option>
+              <% channels.filter(c => c.type === 0).forEach(function(c) { %>
+                <option value="<%= c.id %>" <%= (config.logChannels && config.logChannels[lt[0]] === c.id) ? "selected" : "" %>>#<%= c.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        <% }) %>
+      </div>
+      <button class="btn btn-primary" type="submit">حفظ الإعدادات</button>
+    </form>
+  </div>
+      <% } else if (page === "roles") { %>
+
+  <% if (typeof saved !== "undefined") { %><div class="saved-toast">✅ تم حفظ الإعدادات بنجاح.</div><% } %>
+
+  <div class="panel">
+    <h3>مستويات الصلاحيات الداخلية</h3>
+    <p class="panel-desc">
+      اربط رتب سيرفرك الحقيقية بأربعة مستويات صلاحية يستخدمها البوت للتحقق قبل أي أمر.
+      يمكن ربط أكثر من رتبة بنفس المستوى. الترتيب من الأدنى للأعلى: موثوق ← طاقم مساعد ← مشرف ← إداري.
+    </p>
+
+    <form method="POST" action="/api/guilds/<%= guildId %>/roles">
+      <%
+        const levels = [
+          ["trusted", "موثوق (Trusted)", "وصول لأوامر أساسية إضافية مثل التذاكر"],
+          ["staff", "طاقم مساعد (Staff)", "warn, warnings"],
+          ["moderator", "مشرف (Moderator)", "mute, kick, purge, lock"],
+          ["admin", "إداري (Admin)", "ban, إعدادات الحماية والرتب"]
+        ];
+        const current = (config.staffRoles && config.staffRoles) || {};
+      %>
+      <% levels.forEach(function(lv) { %>
+        <div class="field">
+          <label><%= lv[1] %> <span style="color:var(--text-dim);">— <%= lv[2] %></span></label>
+          <select name="<%= lv[0] %>" multiple size="4" style="height:auto;">
+            <% roles.forEach(function(r) { %>
+              <option value="<%= r.id %>" <%= (current[lv[0]] || []).includes(r.id) ? "selected" : "" %>><%= r.name %></option>
+            <% }) %>
+          </select>
+          <div class="field-hint">اضغط Ctrl (أو Cmd) لاختيار أكثر من رتبة.</div>
+        </div>
+      <% }) %>
+      <button class="btn btn-primary" type="submit">حفظ الإعدادات</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>ملاحظة أمنية</h3>
+    <p class="panel-desc">
+      صلاحية Administrator في ديسكورد نفسها تُعامَل دائماً كمستوى "إداري" داخل البوت بغض النظر عن هذا الإعداد،
+      ومالك السيرفر ومالك البوت يملكان دائماً أعلى صلاحية ولا يمكن سحبها من هنا.
+    </p>
+  </div>
+      <% } else if (page === "automod") { %>
+
+  <% if (typeof saved !== "undefined") { %><div class="saved-toast">✅ تم حفظ الإعدادات بنجاح.</div><% } %>
+
+  <form method="POST" action="/api/guilds/<%= guildId %>/automod">
+    <div class="panel">
+      <div class="toggle-row">
+        <div>
+          <div class="t-label">الحماية التلقائية بالكامل</div>
+          <div class="t-desc">مفتاح رئيسي — تعطيله يوقف كل ميزات AutoMod أدناه دفعة واحدة</div>
+        </div>
+        <label class="switch"><input type="checkbox" name="enabled" <%= config.automod.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>منع السبام (Flooding)</h3>
+      <div class="toggle-row">
+        <div class="t-label">تفعيل</div>
+        <label class="switch"><input type="checkbox" name="antiSpamEnabled" <%= config.automod.antiSpam.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="field"><label>أقصى عدد رسائل</label><input type="number" name="maxMessages" value="<%= config.automod.antiSpam.maxMessages %>" min="2" max="50" /></div>
+        <div class="field"><label>خلال كم ثانية</label><input type="number" name="perSeconds" value="<%= config.automod.antiSpam.perSeconds %>" min="2" max="60" /></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>الروابط والدعوات</h3>
+      <div class="toggle-row">
+        <div><div class="t-label">منع روابط دعوة السيرفرات</div><div class="t-desc">discord.gg/...</div></div>
+        <label class="switch"><input type="checkbox" name="antiInviteEnabled" <%= config.automod.antiInvite.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="t-label">منع الروابط بشكل عام</div><div class="t-desc">أي رابط http/https</div></div>
+        <label class="switch"><input type="checkbox" name="antiLinkEnabled" <%= config.automod.antiLink.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>سبام المنشن (Mass Mentions)</h3>
+      <div class="toggle-row">
+        <div class="t-label">تفعيل</div>
+        <label class="switch"><input type="checkbox" name="antiMentionEnabled" <%= config.automod.antiMentionSpam.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+      <div class="field" style="margin-top:14px;"><label>أقصى عدد منشن في رسالة واحدة</label><input type="number" name="maxMentions" value="<%= config.automod.antiMentionSpam.maxMentions %>" min="2" max="30" /></div>
+    </div>
+
+    <div class="panel">
+      <h3>الحماية من الـ Raid</h3>
+      <div class="toggle-row">
+        <div class="t-label">تفعيل</div>
+        <label class="switch"><input type="checkbox" name="antiRaidEnabled" <%= config.automod.antiRaid.enabled ? "checked" : "" %> /><span class="track"></span></label>
+      </div>
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="field"><label>عتبة الانضمامات المشبوهة</label><input type="number" name="joinThreshold" value="<%= config.automod.antiRaid.joinThreshold %>" min="3" max="100" /></div>
+        <div class="field"><label>خلال كم ثانية</label><input type="number" name="raidPerSeconds" value="<%= config.automod.antiRaid.perSeconds %>" min="5" max="300" /></div>
+      </div>
+      <div class="field">
+        <label>الإجراء التلقائي عند اكتشاف Raid</label>
+        <select name="raidAction">
+          <option value="lockdown_only" <%= config.automod.antiRaid.action === "lockdown_only" ? "selected" : "" %>>تنبيه فقط (بدون إجراء تلقائي على الأعضاء)</option>
+          <option value="kick" <%= config.automod.antiRaid.action === "kick" ? "selected" : "" %>>طرد الأعضاء الجدد المشبوهين</option>
+          <option value="ban" <%= config.automod.antiRaid.action === "ban" ? "selected" : "" %>>حظر الأعضاء الجدد المشبوهين</option>
+        </select>
+        <div class="field-hint">"تنبيه فقط" هو الخيار الأكثر أماناً — يرسل لك تنبيهاً وأنت تقرر يدوياً.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>تصعيد التحذيرات (Escalation)</h3>
+      <p class="panel-desc">عدد التحذيرات النشطة قبل أن يقترح البوت إجراءً أقوى تلقائياً عند استخدام أمر /warn.</p>
+      <div class="grid-2">
+        <div class="field"><label>تحذيرات قبل اقتراح الكتم</label><input type="number" name="warnsBeforeMute" value="<%= config.moderationEscalation.warnsBeforeMute %>" min="1" /></div>
+        <div class="field"><label>تحذيرات قبل اقتراح الطرد</label><input type="number" name="warnsBeforeKick" value="<%= config.moderationEscalation.warnsBeforeKick %>" min="1" /></div>
+        <div class="field"><label>تحذيرات قبل اقتراح الحظر</label><input type="number" name="warnsBeforeBan" value="<%= config.moderationEscalation.warnsBeforeBan %>" min="1" /></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit">حفظ كل الإعدادات</button>
+  </form>
+      <% } else if (page === "tickets") { %>
+
+  <div class="filter-bar">
+    <a class="chip <%= status === 'all' ? 'active' : '' %>" href="?status=all">الكل</a>
+    <a class="chip <%= status === 'open' ? 'active' : '' %>" href="?status=open">مفتوحة</a>
+    <a class="chip <%= status === 'claimed' ? 'active' : '' %>" href="?status=claimed">مُستلَمة</a>
+    <a class="chip <%= status === 'closed' ? 'active' : '' %>" href="?status=closed">مغلقة</a>
+  </div>
+
+  <div class="panel" style="padding:0;">
+    <% if (!tickets.length) { %>
+      <div class="empty-state">لا توجد تذاكر مطابقة.</div>
+    <% } else { %>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>النوع</th><th>صاحب التذكرة</th><th>الحالة</th><th>المستلِم</th><th>تاريخ الفتح</th></tr></thead>
+        <tbody>
+          <% tickets.forEach(function(t) { %>
+            <tr>
+              <td class="mono">#<%= t.ticketNumber %></td>
+              <td><%= t.category %></td>
+              <td><%= t.ownerTag %></td>
+              <td><span class="badge badge-<%= t.status %>"><%= { open: "مفتوحة", claimed: "مستلَمة", closed: "مغلقة" }[t.status] %></span></td>
+              <td><%= t.claimedBy || "—" %></td>
+              <td class="mono"><%= new Date(t.createdAt).toLocaleString("ar-EG") %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+      <% } else if (page === "cases") { %>
+
+  <div class="filter-bar">
+    <a class="chip <%= type === 'all' ? 'active' : '' %>" href="?type=all">الكل</a>
+    <a class="chip <%= type === 'warn' ? 'active' : '' %>" href="?type=warn">تحذيرات</a>
+    <a class="chip <%= type === 'mute' ? 'active' : '' %>" href="?type=mute">كتم</a>
+    <a class="chip <%= type === 'kick' ? 'active' : '' %>" href="?type=kick">طرد</a>
+    <a class="chip <%= type === 'ban' ? 'active' : '' %>" href="?type=ban">حظر</a>
+  </div>
+
+  <div class="panel" style="padding:0;">
+    <% if (!cases.length) { %>
+      <div class="empty-state">لا توجد إجراءات مطابقة.</div>
+    <% } else { %>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>النوع</th><th>العضو المستهدف</th><th>المسؤول</th><th>السبب</th><th>التاريخ</th></tr></thead>
+        <tbody>
+          <% cases.forEach(function(c) { %>
+            <tr>
+              <td class="mono">#<%= c.caseId %></td>
+              <td><span class="badge badge-<%= c.type %>"><%= c.type %></span></td>
+              <td><%= c.targetTag %></td>
+              <td><%= c.moderatorTag %></td>
+              <td><%= c.reason %></td>
+              <td class="mono"><%= new Date(c.createdAt).toLocaleString("ar-EG") %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+      <% } else if (page === "audit-log") { %>
+
+  <%
+    const categories = [
+      ["all", "الكل"], ["moderation", "إدارية"], ["message", "رسائل"], ["voice", "صوت"],
+      ["member", "أعضاء"], ["role", "رتب"], ["channel", "رومات"], ["server", "سيرفر"],
+      ["ticket", "تذاكر"], ["automod", "حماية تلقائية"], ["command", "أوامر"], ["unauthorized_attempt", "محاولات غير مصرحة"]
+    ];
+  %>
+  <div class="filter-bar">
+    <% categories.forEach(function(c) { %>
+      <a class="chip <%= category === c[0] ? 'active' : '' %>" href="?category=<%= c[0] %>"><%= c[1] %></a>
+    <% }) %>
+  </div>
+
+  <div class="feed">
+    <% if (!entries.length) { %>
+      <div class="empty-state">لا توجد أحداث مطابقة.</div>
+    <% } else { %>
+      <% entries.forEach(function(e) { %>
+        <div class="feed-row">
+          <span class="feed-ts"><%= new Date(e.createdAt).toLocaleString("ar-EG") %></span>
+          <span class="feed-cat cat-<%= e.category %>"><%= e.category %></span>
+          <span class="feed-desc">
+            <strong><%= e.action %></strong>
+            <% if (e.executorTag) { %><span class="muted"> — بواسطة <%= e.executorTag %></span><% } %>
+            <% if (e.targetTag) { %><span class="muted"> ← الهدف: <%= e.targetTag %></span><% } %>
+            <% if (e.channelName) { %><span class="muted"> — #<%= e.channelName %></span><% } %>
+            <% if (e.reason) { %><br/><span class="muted">السبب: <%= e.reason %></span><% } %>
+          </span>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <div class="pagination">
+    <% if (page > 1) { %><a href="?category=<%= category %>&page=<%= page - 1 %>">السابق</a><% } %>
+    <span class="current"><%= page %> / <%= totalPages %></span>
+    <% if (page < totalPages) { %><a href="?category=<%= category %>&page=<%= page + 1 %>">التالي</a><% } %>
+  </div>
+      <% } %>
+    </div>
+  </main>
+</div>
+<% } %>
+
+</body>
+</html>
